@@ -37,7 +37,6 @@ let job: JobOut | null = $state(null);
 let failure: Failure | null = $state(null);
 let fieldError: string | null = $state(null);
 let announcement = $state("");
-let canPaste = $state(false);
 
 let input: HTMLInputElement | undefined = $state();
 let controller: AbortController | null = null;
@@ -47,7 +46,6 @@ let lastPhase = "";
 const busy = $derived(stage === "inspecting" || stage === "downloading");
 
 onMount(() => {
-  canPaste = typeof navigator.clipboard?.readText === "function";
   const shared = new URLSearchParams(location.search).get("url");
   if (shared) url = shared.slice(0, 4096);
 });
@@ -102,6 +100,10 @@ async function analyze(event?: SubmitEvent): Promise<void> {
 }
 
 async function paste(): Promise<void> {
+  if (typeof navigator.clipboard?.readText !== "function") {
+    input?.focus();
+    return;
+  }
   try {
     const text = (await navigator.clipboard.readText()).trim();
     if (text) {
@@ -209,9 +211,8 @@ const fieldMessage = $derived(
         disabled={stage === "downloading"}
       />
       <div class="buttons">
-        {#if canPaste}
-          <button type="button" class="btn btn-secondary" onclick={paste} disabled={busy}>{t.form.paste}</button>
-        {/if}
+        <!-- Always rendered (no layout shift); falls back to focusing the field. -->
+        <button type="button" class="btn btn-secondary" onclick={paste} disabled={busy}>{t.form.paste}</button>
         <button type="submit" class="btn btn-primary" disabled={busy} aria-busy={stage === "inspecting"}>
           {stage === "inspecting" ? t.form.submitting : t.form.submit}
         </button>
