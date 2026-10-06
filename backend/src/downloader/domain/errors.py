@@ -16,6 +16,7 @@ class ErrorCode(StrEnum):
     INVALID_URL = "INVALID_URL"
     URL_NOT_ALLOWED = "URL_NOT_ALLOWED"
     UNSUPPORTED_SITE = "UNSUPPORTED_SITE"
+    UNSUPPORTED_CONTENT = "UNSUPPORTED_CONTENT"
     VALIDATION_ERROR = "VALIDATION_ERROR"
     # Content
     CONTENT_NOT_FOUND = "CONTENT_NOT_FOUND"
@@ -58,6 +59,9 @@ ERROR_SPECS: dict[ErrorCode, ErrorSpec] = {
     ErrorCode.INVALID_URL: _spec(400, "The URL is not valid."),
     ErrorCode.URL_NOT_ALLOWED: _spec(400, "This address is not allowed."),
     ErrorCode.UNSUPPORTED_SITE: _spec(422, "This website is not supported."),
+    ErrorCode.UNSUPPORTED_CONTENT: _spec(
+        422, "This kind of link is not supported (e.g. profiles, playlists)."
+    ),
     ErrorCode.VALIDATION_ERROR: _spec(422, "The request is not valid."),
     ErrorCode.CONTENT_NOT_FOUND: _spec(404, "The content does not exist or was removed."),
     ErrorCode.CONTENT_PRIVATE: _spec(403, "The content is private."),

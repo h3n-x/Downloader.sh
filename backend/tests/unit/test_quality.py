@@ -110,6 +110,12 @@ def test_size_limit_marks_options_and_moves_default() -> None:
     assert by["v720"].is_default
 
 
+def test_duration_limit_marks_every_option() -> None:
+    opts = build_options(YOUTUBE, duration=212, limits=Limits(max_duration=60))
+    assert all(o.exceeds_limit for o in opts)
+    assert not any(o.is_default for o in opts)
+
+
 def test_vertical_video_uses_short_side() -> None:
     tiktok = [
         fmt("h264_540", AV, "mp4", vcodec="h264", acodec="aac", width=576, height=1024, tbr=900),

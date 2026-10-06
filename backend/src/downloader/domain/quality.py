@@ -107,6 +107,12 @@ def _audio_ext(fmt: MediaFormat) -> str:
 @dataclass(frozen=True, slots=True)
 class Limits:
     max_filesize: int | None = None
+    max_duration: float | None = None
+
+    def exceeded(self, size: int | None, duration: float | None) -> bool:
+        too_big = bool(self.max_filesize and size and size > self.max_filesize)
+        too_long = bool(self.max_duration and duration and duration > self.max_duration)
+        return too_big or too_long
 
 
 def _video_option(
@@ -133,7 +139,7 @@ def _video_option(
         audio_format_id=audio.format_id if audio else None,
         estimated_size=size,
         size_is_estimate=est,
-        exceeds_limit=bool(limits.max_filesize and size and size > limits.max_filesize),
+        exceeds_limit=limits.exceeded(size, duration),
     )
 
 
@@ -154,7 +160,7 @@ def _audio_option(
         extract_audio=True,
         estimated_size=size,
         size_is_estimate=est,
-        exceeds_limit=bool(limits.max_filesize and size and size > limits.max_filesize),
+        exceeds_limit=limits.exceeded(size, duration),
     )
 
 
