@@ -1,0 +1,29 @@
+---
+import Base from "./Base.astro";
+
+interface Props {
+  title: string;
+  updated: string;
+}
+const { title, updated } = Astro.props;
+---
+
+<Base title={`${title} — downloader.sh`}>
+  <article class="prose">
+    <h1>{title}</h1>
+    <p class="muted">Última actualización: <time datetime={updated}>{updated}</time></p>
+    <p class="draft">
+      Borrador técnico pendiente de revisión jurídica profesional. No constituye asesoramiento legal.
+    </p>
+    <slot />
+  </article>
+</Base>
+
+<style>
+  .draft {
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius);
+    background: var(--warning-soft);
+    border: var(--border-width) solid var(--warning);
+  }
+</style>

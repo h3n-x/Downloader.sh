@@ -1,0 +1,163 @@
+---
+import "../styles/global.css";
+import { es as t } from "../i18n/es";
+
+interface Props {
+  title?: string;
+  description?: string;
+  noindex?: boolean;
+}
+
+const { title = t.site.title, description = t.site.description, noindex = false } = Astro.props;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+const ogImage = new URL("/og.png", Astro.site);
+const legal = [
+  { href: "/terminos", label: t.footer.terms },
+  { href: "/privacidad", label: t.footer.privacy },
+  { href: "/copyright", label: t.footer.copyright },
+  { href: "/uso-aceptable", label: t.footer.acceptableUse },
+];
+---
+
+<!doctype html>
+<html lang={t.locale}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    {noindex && <meta name="robots" content="noindex" />}
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#fafaf9" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#121211" media="(prefers-color-scheme: dark)" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={t.site.name} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:locale" content="es_ES" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <script is:inline src="/theme.js"></script>
+    <slot name="head" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">{t.site.skip}</a>
+    <header class="site-header">
+      <div class="container bar">
+        <a href="/" class="brand" aria-label={t.site.name}>
+          <svg viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+            <rect width="32" height="32" rx="7"></rect>
+            <path d="M16 7v13m-6-6 6 6 6-6M9 25h14"></path>
+          </svg>
+          <span>downloader<span class="tld">.sh</span></span>
+        </a>
+        <button
+          id="theme-toggle"
+          class="btn btn-secondary theme-toggle"
+          type="button"
+          hidden
+          data-label-system={t.theme.system}
+          data-label-light={t.theme.light}
+          data-label-dark={t.theme.dark}
+        >
+          <span>{t.theme.label}:</span>
+          <span data-theme-label>{t.theme.system}</span>
+        </button>
+      </div>
+    </header>
+
+    <main id="main" class="container main">
+      <slot />
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <p class="muted responsibility">{t.footer.responsibility}</p>
+        <nav aria-label={t.footer.nav}>
+          <ul>
+            {legal.map((l) => <li><a href={l.href}>{l.label}</a></li>)}
+          </ul>
+        </nav>
+      </div>
+    </footer>
+  </body>
+</html>
+
+<style>
+  .site-header {
+    border-block-end: var(--border-width) solid var(--border);
+  }
+  .bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    min-height: 4rem;
+  }
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-height: var(--target);
+    font-family: var(--font-mono);
+    font-weight: var(--weight-bold);
+    font-size: var(--step-1);
+    color: var(--text);
+    text-decoration: none;
+  }
+  .brand svg {
+    width: 1.75rem;
+    height: 1.75rem;
+  }
+  .brand rect {
+    fill: var(--accent);
+  }
+  .brand path {
+    fill: none;
+    stroke: var(--accent-text);
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .tld {
+    color: var(--accent);
+  }
+  .theme-toggle {
+    padding-inline: var(--space-4);
+    font-size: var(--step--1);
+  }
+  .main {
+    flex: 1;
+    padding-block: var(--space-7) var(--space-8);
+  }
+  .site-footer {
+    border-block-start: var(--border-width) solid var(--border);
+    padding-block: var(--space-6);
+    font-size: var(--step--1);
+  }
+  .footer-inner {
+    display: grid;
+    gap: var(--space-4);
+  }
+  .responsibility {
+    max-width: 60ch;
+  }
+  .site-footer ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1) var(--space-5);
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .site-footer a {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--target);
+  }
+</style>

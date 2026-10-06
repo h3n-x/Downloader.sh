@@ -1,0 +1,17 @@
+version: 2
+updates:
+  # yt-dlp tracks platform changes: review its updates quickly (weekly at minimum).
+  - package-ecosystem: uv
+    directory: /backend
+    schedule: { interval: weekly }
+    groups:
+      extraction: { patterns: ["yt-dlp*", "deno"] }
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule: { interval: weekly }
+  - package-ecosystem: github-actions
+    directory: /
+    schedule: { interval: monthly }
+  - package-ecosystem: docker
+    directory: /
+    schedule: { interval: monthly }

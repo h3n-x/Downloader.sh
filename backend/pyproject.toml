@@ -1,0 +1,81 @@
+[project]
+name = "downloader"
+version = "0.1.0"
+description = "Downloader.sh backend: inspect and download publicly accessible media from user-provided URLs."
+requires-python = ">=3.13,<3.15"
+dependencies = [
+    "fastapi>=0.142.2,<0.143",
+    "uvicorn>=0.54.0,<0.55",
+    "pydantic>=2.13.5,<3",
+    "pydantic-settings>=2.15.0,<3",
+    "prometheus-client>=0.26.0,<0.27",
+    # Extraction engine: only imported by downloader.extraction.ytdlp (worker process).
+    "yt-dlp[default]==2026.8.19",
+    # JS runtime required by yt-dlp for full YouTube support (runs with no permissions).
+    "deno==2.9.7",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.16.10",
+    "mypy>=2.4.0",
+    "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.0",
+    "hypothesis>=6.168.5",
+    "httpx2>=2.13.1",
+    "pip-audit>=2.10.1",
+]
+
+[project.scripts]
+downloader = "downloader.__main__:main"
+
+[build-system]
+requires = ["uv_build>=0.11,<0.12"]
+build-backend = "uv_build"
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+
+[tool.ruff.lint]
+select = [
+    "E", "W", "F", "I", "B", "UP", "S", "BLE", "A", "C4", "DTZ", "T10", "ISC", "PIE", "PT",
+    "RET", "SIM", "TID", "ARG", "PTH", "PL", "TRY", "RUF", "ASYNC", "LOG", "G", "FBT", "N",
+]
+ignore = [
+    "PLR0913",  # explicit keyword-heavy constructors are fine
+    "PLR2004",  # magic values in comparisons are clearer inline for HTTP codes / limits
+    "TRY003",   # long messages in exceptions are intentional for operators
+    "FBT001", "FBT002",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101", "S104", "PLR2004", "ARG", "FBT", "S311", "PLC0415", "E501", "TRY301", "SLF001", "TID251", "S603", "S607",
+    "ASYNC221", "ASYNC240", "PLR0917",
+]
+
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+"subprocess.run".msg = "Use downloader.infra.worker_launcher; never spawn processes ad hoc."
+"os.system".msg = "Never use a shell."
+
+[tool.mypy]
+strict = true
+python_version = "3.13"
+plugins = ["pydantic.mypy"]
+warn_unreachable = true
+enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
+
+[[tool.mypy.overrides]]
+module = ["yt_dlp", "yt_dlp.*"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+addopts = "-ra --strict-markers -m 'not live'"
+markers = [
+    "live: hits real third-party platforms over the Internet (opt-in: -m live)",
+    "slow: spawns real worker processes / ffmpeg",
+]
+filterwarnings = ["error"]

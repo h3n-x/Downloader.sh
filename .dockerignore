@@ -1,0 +1,14 @@
+**/node_modules
+**/.venv
+**/dist
+**/.astro
+**/__pycache__
+**/.pytest_cache
+**/.mypy_cache
+**/.ruff_cache
+**/.hypothesis
+**/test-results
+**/playwright-report
+.git
+.env
+docs

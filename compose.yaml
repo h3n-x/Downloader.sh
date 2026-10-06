@@ -1,0 +1,28 @@
+# Single-node production-like deployment. Put a TLS reverse proxy (e.g. Caddy) in
+# front; see docs/deployment.md. Values here are safe defaults, not tuning advice.
+services:
+  app:
+    build: .
+    image: downloader:latest
+    restart: unless-stopped
+    env_file: [.env]
+    environment:
+      DL_FORWARDED_ALLOW_IPS: ${DL_FORWARDED_ALLOW_IPS:-127.0.0.1}
+    ports:
+      - "127.0.0.1:8000:8000" # only the reverse proxy should reach the app
+    read_only: true
+    tmpfs:
+      # Ephemeral job files. Size ≥ DL_DISK_QUOTA; contents vanish on restart by design.
+      - /data:rw,size=24g,mode=0700,uid=10001,gid=10001
+      - /tmp:rw,size=64m,mode=1777
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    pids_limit: 512 # bounds yt-dlp + ffmpeg + deno process trees
+    mem_limit: 4g # workers inherit the cgroup limit (RLIMIT_AS is unusable with V8)
+    cpus: 4
+    ulimits:
+      nofile: { soft: 8192, hard: 8192 }
+    stop_grace_period: 25s
+    logging:
+      driver: json-file
+      options: { max-size: "20m", max-file: "5" }

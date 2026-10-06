@@ -1,0 +1,78 @@
+---
+import schema from "../../../backend/openapi.json";
+import Downloader from "../components/Downloader.svelte";
+import { es as t } from "../i18n/es";
+import Base from "../layouts/Base.astro";
+
+// Single source of truth: the backend exports enabled providers into the OpenAPI document.
+const providers = (schema.info as { "x-providers": { slug: string; name: string }[] })[
+  "x-providers"
+];
+const jsonLd = JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  name: t.site.name,
+  description: t.site.description,
+  applicationCategory: "MultimediaApplication",
+  operatingSystem: "Any",
+  offers: { "@type": "Offer", price: "0" },
+});
+---
+
+<Base>
+  <script type="application/ld+json" slot="head" set:html={jsonLd} />
+  <section class="hero" aria-labelledby="hero-title">
+    <h1 id="hero-title">{t.hero.title}</h1>
+    <p class="lead muted">{t.hero.lead}</p>
+  </section>
+
+  <Downloader client:load />
+
+  <section class="supported" aria-labelledby="supported-title">
+    <h2 id="supported-title" class="supported-title">{t.form.supported}</h2>
+    <ul>
+      {providers.map((p) => <li>{p.name}</li>)}
+    </ul>
+  </section>
+</Base>
+
+<style>
+  .hero {
+    display: grid;
+    gap: var(--space-3);
+    margin-block-end: var(--space-6);
+  }
+  h1 {
+    font-size: var(--step-3);
+    letter-spacing: -0.02em;
+    max-width: 22ch;
+  }
+  .lead {
+    font-size: var(--step-1);
+    max-width: 50ch;
+  }
+  .supported {
+    margin-block-start: var(--space-7);
+  }
+  .supported-title {
+    font-size: var(--step--1);
+    font-weight: var(--weight-medium);
+    color: var(--text-muted);
+    margin-block-end: var(--space-3);
+  }
+  .supported ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .supported li {
+    padding: var(--space-1) var(--space-3);
+    border: var(--border-width) solid var(--border);
+    border-radius: 999px;
+    font-size: var(--step--1);
+    background: var(--surface);
+  }
+</style>
