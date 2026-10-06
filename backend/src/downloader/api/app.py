@@ -5,18 +5,20 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import hmac
+import json
 from collections.abc import AsyncIterator, Callable
 from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, Request, Response
 from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.staticfiles import StaticFiles
 from starlette.types import Scope
 
 from downloader import __version__
 from downloader.api import errors
-from downloader.api.middleware import RequestContextMiddleware
+from downloader.api.middleware import RequestContextMiddleware, build_csp
 from downloader.api.ratelimit import TokenBuckets
 from downloader.api.routes import Services, router
 from downloader.app.inspect import InspectService
@@ -34,15 +36,35 @@ from downloader.worker.protocol import Phase, WorkerLimits
 
 
 class CachedStaticFiles(StaticFiles):
-    """Hashed build assets are immutable; HTML must always revalidate."""
+    """Serves Astro's ``format: "file"`` output (``/terminos`` → ``terminos.html``).
+
+    Hashed build assets are immutable; HTML must always revalidate. ``api/`` paths are
+    never served from here so unknown API routes keep the JSON error envelope.
+    """
 
     async def get_response(self, path: str, scope: Scope) -> Response:
-        response = await super().get_response(path, scope)
+        if path == "api" or path.startswith("api/"):
+            raise StarletteHTTPException(404)
+        response = await self._lookup(path, scope)
+        if response is None and path and "." not in path.rsplit("/", 1)[-1]:
+            response = await self._lookup(f"{path}.html", scope)
+        if response is None:
+            response = await super().get_response(path, scope)  # 404.html or HTTP 404
         if path.startswith("_astro/"):
             response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
         else:
             response.headers.setdefault("Cache-Control", "no-cache")
         return response
+
+    async def _lookup(self, path: str, scope: Scope) -> Response | None:
+        """Return the file response, or None when the path does not exist."""
+        try:
+            response = await super().get_response(path, scope)
+        except StarletteHTTPException as exc:
+            if exc.status_code != 404:
+                raise
+            return None
+        return None if response.status_code == 404 else response
 
 
 def _job_metrics(metrics: Metrics) -> Callable[[Job], None]:
@@ -56,6 +78,14 @@ def _job_metrics(metrics: Metrics) -> Callable[[Job], None]:
                 metrics.download_bytes.inc(job.file.size)
 
     return record
+
+
+def _csp(static_dir: Path | None) -> str:
+    """Include hashes of the inline blocks the frontend build emitted (see csp-hashes.mjs)."""
+    if static_dir is None or not (static_dir / "csp-hashes.json").is_file():
+        return build_csp()
+    data = json.loads((static_dir / "csp-hashes.json").read_text(encoding="utf-8"))
+    return build_csp(tuple(data.get("script", ())), tuple(data.get("style", ())))
 
 
 def create_app(settings: Settings | None = None, backend: MediaBackend | None = None) -> FastAPI:
@@ -153,5 +183,7 @@ def create_app(settings: Settings | None = None, backend: MediaBackend | None = 
     if static_dir is not None and static_dir.is_dir():
         app.mount("/", CachedStaticFiles(directory=static_dir, html=True), name="static")
 
-    app.add_middleware(RequestContextMiddleware, metrics=metrics, hsts=settings.hsts)
+    app.add_middleware(
+        RequestContextMiddleware, metrics=metrics, hsts=settings.hsts, csp=_csp(static_dir)
+    )
     return app

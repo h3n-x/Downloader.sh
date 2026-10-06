@@ -1,0 +1,39 @@
+---
+import Legal from "../layouts/Legal.astro";
+---
+
+<Legal title="Privacidad" updated="2026-10-06">
+  <h2>Principio: guardar lo mínimo</h2>
+  <p>No hay cuentas, ni cookies de seguimiento, ni analítica de terceros.</p>
+  <h2>Qué datos se tratan y durante cuánto tiempo</h2>
+  <ul>
+    <li>
+      <strong>Enlace que pegas:</strong> se usa para analizar y descargar el contenido. Los
+      metadatos se guardan en memoria unos minutos para evitar análisis repetidos. Los registros
+      solo contienen una huella irreversible del enlace, nunca el enlace completo.
+    </li>
+    <li>
+      <strong>Archivo descargado:</strong> se guarda temporalmente en el servidor y se borra
+      automáticamente cuando caduca (por defecto, 15 minutos) o si cancelas la descarga.
+    </li>
+    <li>
+      <strong>Dirección IP:</strong> se usa para limitar abusos mediante un identificador derivado
+      (HMAC) que no permite recuperar la IP. No se guarda la IP en los registros de la aplicación.
+    </li>
+    <li>
+      <strong>Preferencia de tema:</strong> se guarda solo en tu navegador (almacenamiento local).
+    </li>
+  </ul>
+  <h2>Terceros</h2>
+  <p>
+    Para analizar un enlace, nuestro servidor se conecta a la plataforma correspondiente. Las
+    miniaturas se cargan directamente desde la plataforma de origen, sin enviar la dirección de esta
+    página (<code>Referrer-Policy: no-referrer</code>).
+  </p>
+  <h2>Tus derechos</h2>
+  <p>
+    Como no asociamos datos a personas identificadas, normalmente no podemos localizar información
+    tuya. Para cualquier consulta, usa el contacto indicado en la página de
+    <a href="/copyright">copyright</a>.
+  </p>
+</Legal>

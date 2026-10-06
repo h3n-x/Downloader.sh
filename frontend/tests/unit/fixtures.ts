@@ -1,0 +1,92 @@
+import type { InspectOut, JobOut } from "../../src/lib/api";
+
+export const inspectOk: InspectOut = {
+  media: {
+    id: "abc",
+    title: "Hola <img src=x onerror=alert(1)>",
+    uploader: "Canal",
+    duration: 212,
+    upload_date: "2026-01-02",
+    thumbnail: { url: "https://i.ytimg.com/vi/abc/hq.jpg", width: 480, height: 360 },
+    webpage_url: "https://www.youtube.com/watch?v=abc",
+    provider: { slug: "youtube", name: "YouTube" },
+  },
+  options: [
+    {
+      id: "v1080",
+      kind: "video",
+      label: "1080p",
+      ext: "mp4",
+      height: 1080,
+      video_format_id: "137",
+      audio_format_id: "140",
+      estimated_size: 93_000_000,
+      size_is_estimate: false,
+      exceeds_limit: false,
+      is_default: true,
+      extract_audio: false,
+    },
+    {
+      id: "v2160",
+      kind: "video",
+      label: "2160p (4K)",
+      ext: "webm",
+      height: 2160,
+      video_format_id: "313",
+      audio_format_id: "251",
+      estimated_size: 9_000_000_000,
+      size_is_estimate: true,
+      exceeds_limit: true,
+      is_default: false,
+      extract_audio: false,
+    },
+    {
+      id: "audio",
+      kind: "audio",
+      label: "Audio",
+      ext: "m4a",
+      audio_format_id: "140",
+      estimated_size: 3_000_000,
+      size_is_estimate: false,
+      exceeds_limit: false,
+      is_default: false,
+      extract_audio: true,
+    },
+  ],
+  formats: [
+    {
+      format_id: "137",
+      ext: "mp4",
+      kind: "video_only",
+      width: 1920,
+      height: 1080,
+      fps: 30,
+      vcodec: "avc1.640028",
+      tbr: 4400,
+      filesize: 90_000_000,
+      filesize_is_estimate: false,
+    },
+    {
+      format_id: "140",
+      ext: "m4a",
+      kind: "audio_only",
+      acodec: "mp4a.40.2",
+      abr: 129,
+      filesize: 3_000_000,
+      filesize_is_estimate: false,
+    },
+  ],
+  limits: { max_filesize: 2_000_000_000, max_duration: 10_800 },
+};
+
+export function job(overrides: Partial<JobOut> = {}): JobOut {
+  return {
+    id: "AAAAAAAAAAAAAAAAAAAAAA",
+    phase: "queued",
+    provider: "youtube",
+    version: 1,
+    events_url: "/api/v1/downloads/AAAAAAAAAAAAAAAAAAAAAA/events",
+    file_url: null,
+    ...overrides,
+  };
+}

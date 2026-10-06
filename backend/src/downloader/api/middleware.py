@@ -17,25 +17,32 @@ log = logging.getLogger("downloader.access")
 
 _REQUEST_ID_RE: Final = re.compile(r"^[A-Za-z0-9-]{8,64}$")
 
-CSP: Final = "; ".join(
-    (
-        "default-src 'self'",
-        "script-src 'self'",
-        "style-src 'self'",
-        "img-src 'self' data: https:",  # thumbnails come from platform CDNs
-        "font-src 'self'",
-        "connect-src 'self'",
-        "media-src 'self'",
-        "object-src 'none'",
-        "base-uri 'none'",
-        "form-action 'self'",
-        "frame-ancestors 'none'",
-        "manifest-src 'self'",
+_HASH_RE: Final = re.compile(r"^'sha256-[A-Za-z0-9+/]{43}='$")
+
+
+def build_csp(script_hashes: tuple[str, ...] = (), style_hashes: tuple[str, ...] = ()) -> str:
+    """Strict CSP. Inline blocks are allowed only by exact hash (from the frontend build)."""
+    scripts = " ".join(("'self'", *(h for h in script_hashes if _HASH_RE.match(h))))
+    styles = " ".join(("'self'", *(h for h in style_hashes if _HASH_RE.match(h))))
+    return "; ".join(
+        (
+            "default-src 'self'",
+            f"script-src {scripts}",
+            f"style-src {styles}",
+            "img-src 'self' data: https:",  # thumbnails come from platform CDNs
+            "font-src 'self'",
+            "connect-src 'self'",
+            "media-src 'self'",
+            "object-src 'none'",
+            "base-uri 'none'",
+            "form-action 'self'",
+            "frame-ancestors 'none'",
+            "manifest-src 'self'",
+        )
     )
-)
+
 
 BASE_HEADERS: Final = {
-    "content-security-policy": CSP,
     "x-content-type-options": "nosniff",
     "referrer-policy": "no-referrer",
     "permissions-policy": (
@@ -48,10 +55,10 @@ BASE_HEADERS: Final = {
 
 
 class RequestContextMiddleware:
-    def __init__(self, app: ASGIApp, *, metrics: Metrics, hsts: bool) -> None:
+    def __init__(self, app: ASGIApp, *, metrics: Metrics, hsts: bool, csp: str) -> None:
         self.app = app
         self.metrics = metrics
-        self.headers = dict(BASE_HEADERS)
+        self.headers = {"content-security-policy": csp, **BASE_HEADERS}
         if hsts:
             self.headers["strict-transport-security"] = "max-age=63072000; includeSubDomains"
 

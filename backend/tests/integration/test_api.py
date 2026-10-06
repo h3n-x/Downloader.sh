@@ -21,7 +21,12 @@ def make_client(
     static = tmp_path / "static"
     (static / "_astro").mkdir(parents=True, exist_ok=True)
     (static / "index.html").write_text("<!doctype html><title>t</title>")
+    (static / "terminos.html").write_text("<!doctype html><title>terms</title>")
+    (static / "404.html").write_text("<!doctype html><title>missing</title>")
     (static / "_astro" / "app.abc123.js").write_text("console.log(1)")
+    (static / "csp-hashes.json").write_text(
+        json.dumps({"script": [f"'sha256-{'A' * 43}='", "'unsafe-inline'"], "style": []})
+    )
     settings = Settings(
         environment="test",
         data_dir=tmp_path / "data",
@@ -220,7 +225,19 @@ def test_static_caching(client: TestClient) -> None:
     index = client.get("/")
     assert index.status_code == 200
     assert index.headers["cache-control"] == "no-cache"
-    assert "frame-ancestors 'none'" in index.headers["content-security-policy"]
+    csp = index.headers["content-security-policy"]
+    assert "frame-ancestors 'none'" in csp
+    assert f"script-src 'self' 'sha256-{'A' * 43}='" in csp
+    assert "unsafe-inline" not in csp  # only well-formed hashes are accepted
+    assert "terms" in client.get("/terminos").text  # Astro build.format = "file"
+    missing = client.get("/no-such-page")
+    assert missing.status_code == 404
+    assert "missing" in missing.text
+    # Encoded traversal must not escape the static root (the data dir is its sibling).
+    for probe in ("/%2e%2e/data/jobs", "/..%2f..%2fetc%2fpasswd", "/%2e%2e%2f%2e%2e%2fetc/passwd"):
+        resp = client.get(probe)
+        assert resp.status_code == 404
+        assert "root:" not in resp.text
     asset = client.get("/_astro/app.abc123.js")
     assert asset.headers["cache-control"] == "public, max-age=31536000, immutable"
 

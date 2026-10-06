@@ -21,7 +21,7 @@ from pydantic import BaseModel, ConfigDict
 
 from downloader.app.inspect import InspectService, url_fingerprint
 from downloader.app.ports import MediaBackend
-from downloader.domain.errors import AppError, ErrorCode
+from downloader.domain.errors import ERROR_SPECS, AppError, ErrorCode
 from downloader.domain.quality import OPTION_ID_RE
 from downloader.infra.storage import JobStorage
 from downloader.worker.protocol import DoneEvent, InfoEvent, Phase, ProgressEvent, WorkerEvent
@@ -54,6 +54,7 @@ class JobView(BaseModel):
     title: str | None = None
     progress: ProgressView | None = None
     error_code: ErrorCode | None = None
+    error_retryable: bool | None = None
     file_ext: str | None = None
     file_size: int | None = None
     expires_at: dt.datetime | None = None
@@ -99,6 +100,7 @@ class Job:
             title=self.title,
             progress=self.progress,
             error_code=self.error_code,
+            error_retryable=ERROR_SPECS[self.error_code].retryable if self.error_code else None,
             file_ext=self.file.ext if self.file else None,
             file_size=self.file.size if self.file else None,
             expires_at=(
