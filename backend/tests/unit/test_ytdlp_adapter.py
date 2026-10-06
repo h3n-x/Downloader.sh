@@ -156,3 +156,19 @@ def test_progress_never_exceeds_total() -> None:
     tracker.hook({"status": "downloading", "downloaded_bytes": 150,
                   "total_bytes_estimate": 100, "info_dict": {"format_id": "x"}})  # fmt: skip
     assert events[0].total is None
+
+
+def test_ffmpeg_inputs_are_restricted_to_local_files() -> None:
+    """Regression: a plain "ffmpeg_i" key is silently ignored by yt-dlp."""
+    import yt_dlp
+    import yt_dlp.postprocessor as pps
+
+    from downloader.extraction.ytdlp import FFMPEG_INPUT_ARGS
+
+    ydl = yt_dlp.YoutubeDL({"quiet": True, "postprocessor_args": FFMPEG_INPUT_ARGS})
+    for name in ("FFmpegMergerPP", "FFmpegExtractAudioPP", "FFmpegFixupM3u8PP", "FFmpegFixupM4aPP"):
+        pp = getattr(pps, name)(ydl)
+        assert pp._configuration_args("ffmpeg", ["_i1", "_i"]) == [
+            "-protocol_whitelist",
+            "file,pipe",
+        ]

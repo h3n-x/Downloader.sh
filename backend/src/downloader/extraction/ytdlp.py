@@ -20,6 +20,7 @@ from pathlib import Path
 from typing import Any, Final, cast
 
 import yt_dlp
+import yt_dlp.postprocessor
 from yt_dlp.networking import Request
 
 from downloader.domain.errors import AppError, ErrorCode
@@ -58,6 +59,23 @@ EXTRACTORS: Final[Mapping[str, tuple[str, ...]]] = {
 SHORTLINK_HOSTS: Final = frozenset({"fb.watch", "on.soundcloud.com", "v.redd.it"})
 MAX_SHORTLINK_HOPS: Final = 3
 
+
+def _ffmpeg_input_args() -> dict[str, list[str]]:
+    """Restrict every FFmpeg postprocessor's inputs to local files.
+
+    yt-dlp resolves input args per postprocessor (``"<pp_key>+ffmpeg_i"``); there is no
+    executable-wide fallback, so a single ``"ffmpeg_i"`` key would be silently ignored.
+    """
+    pps = yt_dlp.postprocessor
+    keys = {
+        getattr(pps, name).pp_key().lower()
+        for name in dir(pps)
+        if name.startswith("FFmpeg") and name.endswith("PP")
+    }
+    return {f"{key}+ffmpeg_i": ["-protocol_whitelist", "file,pipe"] for key in sorted(keys)}
+
+
+FFMPEG_INPUT_ARGS: Final = _ffmpeg_input_args()
 ALLOWED_PROTOCOLS: Final = frozenset({"http", "https", "m3u8", "m3u8_native", "http_dash_segments"})
 _MAX_TITLE: Final = 300
 _MAX_UPLOADER: Final = 120
@@ -403,7 +421,7 @@ class YtDlpExtractor:
             "restrictfilenames": True,
             "progress_hooks": [progress_hook],
             "postprocessor_hooks": [pp_hook],
-            "postprocessor_args": {"ffmpeg_i": ["-protocol_whitelist", "file,pipe"]},
+            "postprocessor_args": FFMPEG_INPUT_ARGS,
         }
         with self._ydl(ctx, **extra) as ydl:
             info, provider = self._extract(ydl, url, ctx)

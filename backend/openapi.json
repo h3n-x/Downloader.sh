@@ -89,6 +89,7 @@
           "UNSUPPORTED_SITE",
           "UNSUPPORTED_CONTENT",
           "VALIDATION_ERROR",
+          "PAYLOAD_TOO_LARGE",
           "CONTENT_NOT_FOUND",
           "CONTENT_PRIVATE",
           "LOGIN_REQUIRED",

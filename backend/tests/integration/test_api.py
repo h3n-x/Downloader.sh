@@ -246,3 +246,22 @@ def test_openapi_schema_is_served(client: TestClient) -> None:
     schema = client.get("/api/v1/openapi.json").json()
     assert "/api/v1/inspect" in schema["paths"]
     assert "ErrorOut" in schema["components"]["schemas"]
+
+
+def test_request_body_is_bounded(client: TestClient) -> None:
+    big = {"url": "https://www.youtube.com/watch?v=" + "a" * 50_000}
+    resp = client.post("/api/v1/inspect", json=big)
+    assert resp.status_code == 413
+    assert error_code(resp) == "PAYLOAD_TOO_LARGE"
+
+    def chunks() -> Iterator[bytes]:  # no Content-Length: counted while streaming
+        yield b'{"url": "'
+        for _ in range(100):
+            yield b"a" * 1024
+        yield b'"}'
+
+    resp = client.post(
+        "/api/v1/inspect", content=chunks(), headers={"content-type": "application/json"}
+    )
+    assert resp.status_code == 413
+    assert client.post("/api/v1/inspect", json={"url": URL}).status_code == 200

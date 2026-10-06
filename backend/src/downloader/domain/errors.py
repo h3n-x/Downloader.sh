@@ -18,6 +18,7 @@ class ErrorCode(StrEnum):
     UNSUPPORTED_SITE = "UNSUPPORTED_SITE"
     UNSUPPORTED_CONTENT = "UNSUPPORTED_CONTENT"
     VALIDATION_ERROR = "VALIDATION_ERROR"
+    PAYLOAD_TOO_LARGE = "PAYLOAD_TOO_LARGE"
     # Content
     CONTENT_NOT_FOUND = "CONTENT_NOT_FOUND"
     CONTENT_PRIVATE = "CONTENT_PRIVATE"
@@ -63,6 +64,7 @@ ERROR_SPECS: dict[ErrorCode, ErrorSpec] = {
         422, "This kind of link is not supported (e.g. profiles, playlists)."
     ),
     ErrorCode.VALIDATION_ERROR: _spec(422, "The request is not valid."),
+    ErrorCode.PAYLOAD_TOO_LARGE: _spec(413, "The request body is too large."),
     ErrorCode.CONTENT_NOT_FOUND: _spec(404, "The content does not exist or was removed."),
     ErrorCode.CONTENT_PRIVATE: _spec(403, "The content is private."),
     ErrorCode.LOGIN_REQUIRED: _spec(403, "The platform requires signing in."),

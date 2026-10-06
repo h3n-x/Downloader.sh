@@ -18,7 +18,11 @@ from starlette.types import Scope
 
 from downloader import __version__
 from downloader.api import errors
-from downloader.api.middleware import RequestContextMiddleware, build_csp
+from downloader.api.middleware import (
+    BodySizeLimitMiddleware,
+    RequestContextMiddleware,
+    build_csp,
+)
 from downloader.api.ratelimit import TokenBuckets
 from downloader.api.routes import Services, router
 from downloader.app.inspect import InspectService
@@ -183,6 +187,7 @@ def create_app(settings: Settings | None = None, backend: MediaBackend | None = 
     if static_dir is not None and static_dir.is_dir():
         app.mount("/", CachedStaticFiles(directory=static_dir, html=True), name="static")
 
+    app.add_middleware(BodySizeLimitMiddleware)  # inner: runs after request ids are set
     app.add_middleware(
         RequestContextMiddleware, metrics=metrics, hsts=settings.hsts, csp=_csp(static_dir)
     )

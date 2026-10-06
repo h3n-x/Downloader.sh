@@ -21,6 +21,7 @@ type Failure = { code: ErrorCode | "NETWORK"; retryable: boolean; retry: () => v
 /** Errors that concern the URL itself are shown on the field, not as a banner. */
 const FIELD_ERRORS: ReadonlySet<string> = new Set([
   "INVALID_URL",
+  "PAYLOAD_TOO_LARGE",
   "URL_NOT_ALLOWED",
   "UNSUPPORTED_SITE",
   "UNSUPPORTED_CONTENT",
@@ -138,7 +139,10 @@ function onJob(next: JobOut): void {
   }
   if (next.phase === "ready" && next.file_url) {
     stage = "ready";
-    window.location.assign(next.file_url);
+    // Only ever navigate to our own download endpoint (defence against open redirects).
+    if (next.file_url.startsWith(`/api/v1/downloads/${next.id}/`)) {
+      window.location.assign(next.file_url);
+    }
   } else if (next.phase === "failed" || next.phase === "expired") {
     stage = "inspected";
     const code = next.error_code ?? "INTERNAL_ERROR";

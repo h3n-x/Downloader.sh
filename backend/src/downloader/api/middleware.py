@@ -11,11 +11,20 @@ from typing import Final
 from starlette.datastructures import MutableHeaders
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
+from downloader.api.errors import error_response
+from downloader.domain.errors import ErrorCode
 from downloader.observability import Metrics, request_id_var
 
 log = logging.getLogger("downloader.access")
 
 _REQUEST_ID_RE: Final = re.compile(r"^[A-Za-z0-9-]{8,64}$")
+MAX_BODY_BYTES: Final = 16 * 1024  # largest legitimate body is a URL + option id
+
+
+class _BodyTooLargeError(BaseException):
+    """Control-flow signal. BaseException on purpose: FastAPI wraps any ``Exception`` raised
+    while reading the body into a generic 400, which would hide the real cause."""
+
 
 _HASH_RE: Final = re.compile(r"^'sha256-[A-Za-z0-9+/]{43}='$")
 
@@ -110,3 +119,42 @@ class RequestContextMiddleware:
                     },
                 )
             request_id_var.reset(token)
+
+
+class BodySizeLimitMiddleware:
+    """Reject oversized bodies before the framework buffers them (declared or chunked)."""
+
+    def __init__(self, app: ASGIApp, *, max_bytes: int = MAX_BODY_BYTES) -> None:
+        self.app = app
+        self.max_bytes = max_bytes
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+        declared = dict(scope.get("headers") or []).get(b"content-length", b"0")
+        if not declared.isdigit() or int(declared) > self.max_bytes:
+            await error_response(ErrorCode.PAYLOAD_TOO_LARGE)(scope, receive, send)
+            return
+        received = 0
+        started = False
+
+        async def limited_receive() -> Message:
+            nonlocal received
+            message = await receive()
+            if message["type"] == "http.request":
+                received += len(message.get("body", b""))
+                if received > self.max_bytes:
+                    raise _BodyTooLargeError
+            return message
+
+        async def tracking_send(message: Message) -> None:
+            nonlocal started
+            started = started or message["type"] == "http.response.start"
+            await send(message)
+
+        try:
+            await self.app(scope, limited_receive, tracking_send)
+        except _BodyTooLargeError:
+            if not started:
+                await error_response(ErrorCode.PAYLOAD_TOO_LARGE)(scope, receive, send)

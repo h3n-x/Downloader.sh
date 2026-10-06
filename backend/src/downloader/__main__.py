@@ -23,6 +23,8 @@ def main() -> None:
         forwarded_allow_ips=os.environ.get("DL_FORWARDED_ALLOW_IPS", "127.0.0.1"),
         server_header=False,
         timeout_keep_alive=5,
+        # Bounds open connections (SSE streams included) before file descriptors run out.
+        limit_concurrency=int(os.environ.get("DL_LIMIT_CONCURRENCY", "2048")),
         timeout_graceful_shutdown=20,
         h11_max_incomplete_event_size=16 * 1024,
         log_config=None,

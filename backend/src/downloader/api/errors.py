@@ -15,7 +15,14 @@ from downloader.observability import request_id_var
 
 log = logging.getLogger(__name__)
 
-_HTTP_TO_CODE = {404: ErrorCode.NOT_FOUND, 405: ErrorCode.NOT_FOUND, 429: ErrorCode.RATE_LIMITED}
+_HTTP_TO_CODE = {
+    400: ErrorCode.VALIDATION_ERROR,
+    404: ErrorCode.NOT_FOUND,
+    405: ErrorCode.NOT_FOUND,
+    413: ErrorCode.PAYLOAD_TOO_LARGE,
+    415: ErrorCode.VALIDATION_ERROR,
+    429: ErrorCode.RATE_LIMITED,
+}
 
 
 def error_response(

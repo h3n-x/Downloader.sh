@@ -104,6 +104,10 @@ export const es = {
         title: "La petición no es válida",
         hint: "Revisa el enlace e inténtalo de nuevo.",
       },
+      PAYLOAD_TOO_LARGE: {
+        title: "La petición es demasiado grande",
+        hint: "Pega solo el enlace de la publicación.",
+      },
       CONTENT_NOT_FOUND: {
         title: "No encontramos el contenido",
         hint: "Puede que se haya eliminado o que el enlace esté incompleto.",
