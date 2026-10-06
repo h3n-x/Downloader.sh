@@ -27,3 +27,9 @@
 
 El protocolo JSONL permite mover los workers a contenedores separados sin red salvo el proxy,
 o detrás de una cola, sin cambiar dominio ni API.
+
+## Nota de implementación (2026-10-06)
+
+La restricción `-protocol_whitelist file,pipe` se aplica con claves por postprocesador
+(`"<pp_key>+ffmpeg_i"`): yt-dlp ignora en silencio una clave genérica `ffmpeg_i`
+(verificado; test de regresión en `tests/unit/test_ytdlp_adapter.py`).
