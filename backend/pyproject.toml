@@ -50,7 +50,9 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["S101", "S104", "PLR2004", "ARG", "FBT", "S311", "PLC0415", "E501", "TRY301", "SLF001"]
+"tests/**" = ["S101", "S104", "PLR2004", "ARG", "FBT", "S311", "PLC0415", "E501", "TRY301", "SLF001", "TID251", "S603", "S607",
+    "ASYNC221", "ASYNC240", "PLR0917",
+]
 
 [tool.ruff.lint.flake8-tidy-imports.banned-api]
 "subprocess.run".msg = "Use downloader.infra.worker_launcher; never spawn processes ad hoc."
