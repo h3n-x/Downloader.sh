@@ -206,7 +206,10 @@ async def ready(svc: Svc, response: Response) -> ReadyOut:
         "ffmpeg": shutil.which("ffmpeg") is not None,
         "deno": shutil.which("deno") is not None,
         "egress_proxy": svc.proxy is None or svc.proxy.running,
-        "storage": data_dir.is_dir() and shutil.disk_usage(data_dir).free > 1024**3,
+        # Not ready if a single maximum-size job could not fit on the data volume.
+        "storage": data_dir.is_dir()
+        and shutil.disk_usage(data_dir).free
+        >= min(svc.settings.max_filesize, svc.settings.disk_quota),
     }
     ok = all(checks.values())
     response.status_code = 200 if ok else 503

@@ -1,0 +1,23 @@
+# Fast checks only on commit (staged files); heavier checks on push.
+pre-commit:
+  parallel: true
+  commands:
+    ruff:
+      root: backend/
+      glob: "*.py"
+      run: uv run ruff format {staged_files} && uv run ruff check --fix {staged_files}
+      stage_fixed: true
+    biome:
+      root: frontend/
+      glob: "*.{ts,js,mjs,json,svelte,astro,css}"
+      run: pnpm exec biome check --write --no-errors-on-unmatched {staged_files}
+      stage_fixed: true
+pre-push:
+  parallel: true
+  commands:
+    backend:
+      root: backend/
+      run: uv run mypy src tests && uv run pytest -q -x -m "not slow"
+    frontend:
+      root: frontend/
+      run: pnpm exec astro check && pnpm exec vitest run

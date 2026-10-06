@@ -123,7 +123,9 @@ describe("Downloader", () => {
     await analyze();
     await fireEvent.click(await screen.findByRole("button", { name: "Descargar" }));
     await waitFor(() => expect(FakeEventSource.last).not.toBeNull());
-    const sent = await (fetchMock.mock.calls.at(-1)?.[0] as Request).clone().json();
+    const lastCall = fetchMock.mock.calls.at(-1);
+    if (!lastCall) throw new Error("expected a download request");
+    const sent = await (lastCall[0] as Request).clone().json();
     expect(sent).toEqual({ url: URL_IN, option_id: "v1080" });
 
     FakeEventSource.last?.emit(
