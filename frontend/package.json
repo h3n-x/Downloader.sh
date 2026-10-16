@@ -19,7 +19,7 @@
   },
   "dependencies": {
     "@astrojs/svelte": "9.0.1",
-    "astro": "7.3.6",
+    "astro": "7.3.8",
     "openapi-fetch": "0.17.0",
     "svelte": "5.57.2"
   },
