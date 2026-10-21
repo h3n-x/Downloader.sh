@@ -102,8 +102,10 @@ jobs:
           for i in $(seq 1 30); do curl -fsS localhost:8000/api/v1/ready && break; sleep 1; done
           curl -fsS localhost:8000/ | grep -q "downloader.sh"
           test "$(docker exec app id -u)" = "10001"
-      - name: Vulnerability scan
+      - name: Vulnerability and secret scan
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        env:
+          TRIVY_SECRET_CONFIG: trivy-secret.yaml
         with:
           image-ref: downloader:ci
           severity: CRITICAL,HIGH

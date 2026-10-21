@@ -30,10 +30,14 @@ RUN --mount=type=cache,target=/root/.cache/uv uv sync --frozen --no-dev --no-edi
 # --- 3. Runtime ----------------------------------------------------------------
 FROM ${PYTHON_IMAGE} AS runtime
 # ffmpeg: remux/merge/extract-audio of local files only. tini: PID 1 that reaps
-# grandchildren (ffmpeg/deno) if a worker dies.
+# grandchildren (ffmpeg/deno) if a worker dies. The base image's pip is removed:
+# the app runs from /app/.venv, and pip's vendored copies (urllib3, msgpack,
+# certifi, setuptools) lag behind their security fixes.
 RUN apt-get update \
  && apt-get install -y --no-install-recommends ffmpeg tini ca-certificates \
  && rm -rf /var/lib/apt/lists/* \
+ && python -m pip uninstall -y pip \
+ && rm -f /usr/local/bin/pip /usr/local/bin/pip3 /usr/local/bin/pip3.* \
  && useradd --system --uid 10001 --no-create-home --home-dir /nonexistent --shell /usr/sbin/nologin app \
  && install -d -o app -g app -m 0700 /data
 COPY --from=backend /app/.venv /app/.venv
