@@ -98,7 +98,10 @@ huella SHA-256 truncada de la URL, código de error. Nada de analítica de terce
 
 `uv.lock` y `pnpm-lock.yaml` con instalación `--frozen`; pnpm bloquea scripts de
 instalación por defecto; Actions fijadas por SHA; `pip-audit` y `pnpm audit` en CI;
-Trivy (CRITICAL/HIGH con fix) y SBOM CycloneDX de la imagen; Dependabot (yt-dlp agrupado).
+Trivy sobre la imagen (vulnerabilidades CRITICAL/HIGH con fix y secretos; `trivy-secret.yaml`
+solo exceptúa los extractores de yt-dlp, que traen claves públicas de sus APIs) y SBOM
+CycloneDX; la imagen final no lleva pip (la app corre desde `/app/.venv`); Dependabot
+(yt-dlp agrupado).
 
 ## Riesgos residuales
 

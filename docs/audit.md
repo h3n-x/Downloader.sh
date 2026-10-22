@@ -30,7 +30,7 @@ Evidencia: **OBSERVED** (comando/test ejecutado), **INFERRED** (deducido), **PRO
 | 6 | Media | API | HTTP 400 mapeado a `INTERNAL_ERROR` 500 | Errores engañosos | Mapeo 400/413/415 | `api/errors.py` | **Corregido** |
 | 7 | Baja | Perf | CLS 0,014 por botón "Pegar" tardío | Salto visual | Render siempre | `Downloader.svelte` | **Corregido** |
 | 8 | Alta | Producción | Extracción real no validada en este entorno: su política de red bloquea YouTube y otros (OBSERVED: `CONNECT` 403 del gateway) | Riesgo de mapeos/errores no vistos en real | Ejecutar `pytest -m live` y prueba manual por proveedor en el entorno real | `tests/live/` | **Abierto (P0)** |
-| 9 | Alta | Despliegue | Etapa runtime del Dockerfile no construida aquí (apt bloqueado); frontend y venv sí | Imagen final sin validar | CI `image` (build + smoke + Trivy) | `Dockerfile`, CI | **Abierto (P0)** |
+| 9 | Alta | Despliegue | Etapa runtime del Dockerfile no construida aquí (apt bloqueado); frontend y venv sí | Imagen final sin validar | CI `image` (build + smoke + Trivy) en verde desde 2026-10-21: imagen sin pip (su copia de urllib3/msgpack/certifi/setuptools tenía avisos con fix), certifi 2026.10.19 y excepción de secretos solo para los extractores de yt-dlp | `Dockerfile`, CI, `trivy-secret.yaml` | **Corregido** |
 | 10 | Media | Seguridad | Sin bloqueo de salida a nivel de red del contenedor | Si algo ignorase el proxy, solo quedaría la política de la app | Reglas `DOCKER-USER`/red sin salida salvo proxy | despliegue | Abierto (P1) |
 | 11 | Media | Rendimiento/abuso | Cada descarga re-extrae (inspección + descarga = 2 extracciones) | Más peticiones a la plataforma → más bloqueos | Reutilizar el info dict reciente en el worker | `app/`, worker | Abierto (P1) |
 | 12 | Media | Abuso | Rate limit solo por IP y en memoria | Ataques distribuidos/IPv6 rotando /64 | PoW/Turnstile-like opcional, límite global por proveedor, store compartido | `api/ratelimit.py` | Abierto (P1) |
@@ -58,7 +58,7 @@ Evidencia: **OBSERVED** (comando/test ejecutado), **INFERRED** (deducido), **PRO
 - **API**: contrato OpenAPI único, errores homogéneos, ids-capacidad, SSE + polling, Range.
 - **Tests**: pirámide completa sin red; propiedades que ya encontraron bugs; E2E full-stack.
   Hueco: validación live (#8).
-- **Despliegue**: compose endurecido, CI con smoke test de imagen, Trivy, SBOM. Hueco: #9.
+- **Despliegue**: compose endurecido, CI con smoke test de imagen, Trivy (vulnerabilidades y secretos), SBOM; la imagen final ya se valida en CI (#9).
 - **Documentación**: README, arquitectura, seguridad, configuración, despliegue, testing,
   troubleshooting, legal, ADRs.
 
@@ -86,7 +86,7 @@ Formato: Impacto · Esfuerzo · Riesgo · Dependencias · Motivo.
 ### P0 — Antes de producción
 
 1. **Validación live por proveedor** · Alto · M · Bajo · Internet sin bloqueos · Confirmar extracción, mapeo de errores y formatos reales (#8).
-2. **Imagen final verde en CI** (build, smoke, Trivy) · Alto · S · Bajo · CI · #9.
+2. ~~**Imagen final verde en CI** (build, smoke, Trivy) · Alto · S · Bajo · CI · #9.~~ Hecho (2026-10-21).
 3. **Identidad del operador, contacto de copyright y revisión jurídica** de las páginas legales y de YouTube/EJS · Alto · M · Medio · abogado · [legal.md](legal.md).
 4. **Licencia del repositorio** · Medio · S · Bajo · decisión del titular · Necesaria para self-hosting/contribuciones.
 5. **Proxy inverso + `DL_FORWARDED_ALLOW_IPS` + bloqueo de salida a redes privadas** · Alto · S · Bajo · host · Slowloris, rate limit correcto, defensa SSRF en red.
