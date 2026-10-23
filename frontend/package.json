@@ -18,7 +18,7 @@
     "gen:api": "openapi-typescript ../backend/openapi.json -o src/lib/api-types.ts"
   },
   "dependencies": {
-    "@astrojs/svelte": "9.0.1",
+    "@astrojs/svelte": "9.1.0",
     "astro": "7.3.6",
     "openapi-fetch": "0.17.0",
     "svelte": "5.57.2"
